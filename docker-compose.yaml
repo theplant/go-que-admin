@@ -1,0 +1,8 @@
+postgres:
+  image: postgres
+  environment:
+    - "POSTGRES_USER=go-que-admin"
+    - "POSTGRES_PASSWORD=123"
+    - "POSTGRES_DB=go-que-admin_dev"
+  ports:
+    - "6432:5432"

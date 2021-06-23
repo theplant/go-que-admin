@@ -8,9 +8,9 @@ type GoqueJob struct {
 	Args            string
 	RetryPolicy     string
 	RunAt           time.Time
-	DoneAt          time.Time
+	DoneAt          *time.Time
 	RetryCount      int
-	ExpiredAt       time.Time
+	ExpiredAt       *time.Time
 	LastErrMsg      string
 	LastErrStack    string
 	UniqueID        string

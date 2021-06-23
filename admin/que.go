@@ -23,18 +23,27 @@ func configQue(b *presets.Builder) {
 		return h.Td(h.Text(fmt.Sprint(runAt)))
 	})
 
-	m.Editing("Args").SaveFunc(func(job interface{}, id string, ctx *web.EventContext) (err error) {
+	eb := m.Editing("Queue", "Args", "RetryPolicy")
+
+	eb.Field("Queue").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
+		j := obj.(*models.GoqueJob)
+		return h.Div().Text(j.Queue)
+	})
+
+	eb.SaveFunc(func(job interface{}, id string, ctx *web.EventContext) (err error) {
 		q := config.TheQ
 
 		j := job.(*models.GoqueJob)
 		var args []interface{}
 		json.Unmarshal([]byte(j.Args), &args)
+		var retryPolicy que.RetryPolicy
+		json.Unmarshal([]byte(j.RetryPolicy), &retryPolicy)
 		_, err = q.Enqueue(context.Background(), nil, que.Plan{
-			Queue: "import_pdf",
-			Args:  que.Args(args...),
-			RunAt: time.Now(),
+			Queue:       "import_pdf",
+			Args:        que.Args(args...),
+			RunAt:       time.Now(),
+			RetryPolicy: retryPolicy,
 		})
 		return
 	})
-	_ = m
 }

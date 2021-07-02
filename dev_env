@@ -1,2 +1,4 @@
 export DB_PARAMS="user=go-que-admin password=123 dbname=go-que-admin_dev sslmode=disable host=localhost port=6432"
 export PORT="9000"
+
+export Queues='[{"Name":"order.foe.send","Args":[{"Name":"StartAt","Type":"time.Time"},{"Name":"StoreID","Type":"string"},{"Name":"OrderID","Type":"string"}]},{"Name":"order.receipt.send","Args":[{"Name":"StartAt","Type":"time.Time"},{"Name":"OrderID","Type":"string"}]}]'

@@ -4,14 +4,15 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
-	queque "github.com/tnclong/go-que"
 	"time"
+
+	queque "github.com/tnclong/go-que"
 )
 
 type GoqueJob struct {
 	ID              uint
 	Queue           string
-	Args            string
+	Args            Args
 	RetryPolicy     RetryPolicy
 	RunAt           time.Time
 	DoneAt          *time.Time
@@ -23,6 +24,25 @@ type GoqueJob struct {
 	UniqueLifeCycle int
 	UpdatedAt       time.Time
 	CreatedAt       time.Time
+}
+
+type Args []interface{}
+
+func (p Args) Value() (driver.Value, error) {
+	return json.Marshal(p)
+}
+
+func (p *Args) Scan(data interface{}) error {
+	var byteData []byte
+	switch values := data.(type) {
+	case []byte:
+		byteData = values
+	case string:
+		byteData = []byte(values)
+	default:
+		return errors.New("scan DayParts unsupported type of data")
+	}
+	return json.Unmarshal(byteData, p)
 }
 
 type RetryPolicy struct {

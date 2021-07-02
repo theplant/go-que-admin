@@ -20,17 +20,21 @@ func editing(m *presets.ModelBuilder) {
 	eb := m.Editing("Queue", "Args", "RetryPolicy")
 
 	eb.Field("Queue").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
+		j := obj.(*models.GoqueJob)
 		return VSelect().
 			Label("Queue").
 			Items(queues).
 			ItemText("Name").
-			ItemValue("Name")
+			ItemValue("Name").
+			Value(j.Queue).
+			FieldName("Queue")
 	})
 
 	eb.Field("Args").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
+		j := obj.(*models.GoqueJob)
 		// TODO: partial refresh
 		argsCfg := queues[0].Args
-		return argsEditor(argsCfg)
+		return argsEditor(j, argsCfg)
 	})
 
 	eb.Field("RetryPolicy").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
@@ -117,7 +121,7 @@ func retryPolicyEditor(j *models.GoqueJob) h.HTMLComponent {
 	).Attr(web.InitContextVars, `{retryPolicyEditorShow: false}`)
 }
 
-func argsEditor(argsCfg []*config.QueueArg) h.HTMLComponent {
+func argsEditor(j *models.GoqueJob, argsCfg []*config.QueueArg) h.HTMLComponent {
 	var argItems []h.HTMLComponent
 	for i, a := range argsCfg {
 		argItems = append(
@@ -126,7 +130,8 @@ func argsEditor(argsCfg []*config.QueueArg) h.HTMLComponent {
 				VListItemTitle(h.Text(a.Name)),
 				VListItemAction(
 					VTextField().
-						FieldName(fmt.Sprintf("Args[%d]", i)),
+						FieldName(fmt.Sprintf("Args[%d]", i)).
+						Value(fmt.Sprint(j.Args[i])),
 				),
 			),
 		)

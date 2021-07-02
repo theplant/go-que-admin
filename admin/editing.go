@@ -20,21 +20,41 @@ func editing(m *presets.ModelBuilder) {
 	eb := m.Editing("Queue", "Args", "RetryPolicy")
 
 	eb.Field("Queue").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
+		ctx.Hub.RegisterEventFunc("updateArgsEditor", updateArgsEditor)
+
 		j := obj.(*models.GoqueJob)
-		return VSelect().
-			Label("Queue").
-			Items(queues).
-			ItemText("Name").
-			ItemValue("Name").
-			Value(j.Queue).
-			FieldName("Queue")
+		// return VSelect().
+		// 	Label("Queue").
+		// 	Items(queues).
+		// 	ItemText("Name").
+		// 	ItemValue("Name").
+		// 	Value(j.Queue).
+		// 	FieldName("Queue")
+
+		var options []h.HTMLComponent
+		for _, q := range queues {
+			opt := h.Option(q.Name).Value(q.Name)
+			if q.Name == j.Queue {
+				opt.Checked(true)
+			}
+			options = append(options, opt)
+		}
+		return web.Bind(h.Select(
+			options...,
+		)).OnInput("updateArgsEditor")
 	})
 
 	eb.Field("Args").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
+		queues := config.MustGetQueues()
+
 		j := obj.(*models.GoqueJob)
-		// TODO: partial refresh
-		argsCfg := queues[0].Args
-		return argsEditor(j, argsCfg)
+		var queue string
+		if j.Queue == "" {
+			queue = queues[0].Name
+		}
+		return web.Portal(
+			argsEditor(queue),
+		).Name("argsEditor")
 	})
 
 	eb.Field("RetryPolicy").ComponentFunc(func(obj interface{}, field *presets.FieldContext, ctx *web.EventContext) h.HTMLComponent {
@@ -121,21 +141,33 @@ func retryPolicyEditor(j *models.GoqueJob) h.HTMLComponent {
 	).Attr(web.InitContextVars, `{retryPolicyEditorShow: false}`)
 }
 
-func argsEditor(j *models.GoqueJob, argsCfg []*config.QueueArg) h.HTMLComponent {
+func updateArgsEditor(ctx *web.EventContext) (er web.EventResponse, err error) {
+	er.UpdatePortals = append(er.UpdatePortals, &web.PortalUpdate{
+		Name: "argsEditor",
+		Body: argsEditor(ctx.Event.Value),
+	})
+	return
+}
+
+func argsEditor(queue string) h.HTMLComponent {
+	queues := config.MustGetQueues()
+	var argsCfg []*config.QueueArg
+	for _, q := range queues {
+		if q.Name == queue {
+			argsCfg = q.Args
+			break
+		}
+	}
+
 	var argItems []h.HTMLComponent
 	for i, a := range argsCfg {
-		var v string
-		if len(j.Args) > i {
-			v = fmt.Sprint(j.Args[i])
-		}
 		argItems = append(
 			argItems,
 			VListItem(
 				VListItemTitle(h.Text(a.Name)),
 				VListItemAction(
 					VTextField().
-						FieldName(fmt.Sprintf("Args[%d]", i)).
-						Value(v),
+						FieldName(fmt.Sprintf("Args[%d]", i)),
 				),
 			),
 		)

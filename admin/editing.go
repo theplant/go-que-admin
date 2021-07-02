@@ -124,6 +124,10 @@ func retryPolicyEditor(j *models.GoqueJob) h.HTMLComponent {
 func argsEditor(j *models.GoqueJob, argsCfg []*config.QueueArg) h.HTMLComponent {
 	var argItems []h.HTMLComponent
 	for i, a := range argsCfg {
+		var v string
+		if len(j.Args) > i {
+			v = fmt.Sprint(j.Args[i])
+		}
 		argItems = append(
 			argItems,
 			VListItem(
@@ -131,7 +135,7 @@ func argsEditor(j *models.GoqueJob, argsCfg []*config.QueueArg) h.HTMLComponent 
 				VListItemAction(
 					VTextField().
 						FieldName(fmt.Sprintf("Args[%d]", i)).
-						Value(fmt.Sprint(j.Args[i])),
+						Value(v),
 				),
 			),
 		)
